@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Sign-In Simple Test</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .result { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 5px; }
+        textarea { width: 100%; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .success { background: #4CAF50; color: white; }
+        .danger { background: #f44336; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Google Sign-In Test for Smart LMS</h2>
+        <p>Click the button below to sign in with Google and get your ID token:</p>
+        
+        <!-- Google Sign-In Button -->
+        <div id="g_id_onload"
+             data-client_id="415824389753-vo8hmp9o8dnk7dfmihg04t46hfvfmltm.apps.googleusercontent.com"
+             data-context="signin"
+             data-ux_mode="popup"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="rectangular"
+             data-theme="outline"
+             data-text="signin_with"
+             data-size="large"
+             data-logo_alignment="left">
+        </div>
+        
+        <div id="result" class="result" style="display: none;"></div>
+        
+        <div id="api-test" style="display: none;">
+            <h3>Test Laravel API</h3>
+            <button onclick="testLaravelAPI()" class="success">Send to Laravel Backend</button>
+            <div id="api-result"></div>
+        </div>
+    </div>
+    
+    <script>
+        let currentCredential = null;
+        let currentUserInfo = null;
+        
+        function handleCredentialResponse(response) {
+            currentCredential = response.credential;
+            
+            // Decode the JWT payload to get user info
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            currentUserInfo = {
+                name: payload.name,
+                email: payload.email,
+                picture: payload.picture
+            };
+            
+            console.log('Google Sign-In Success:', { payload, credential: response.credential });
+            
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').innerHTML = `
+                <h3>✅ Google Sign-In Successful!</h3>
+                <p><strong>Name:</strong> ${currentUserInfo.name}</p>
+                <p><strong>Email:</strong> ${currentUserInfo.email}</p>
+                <p><strong>ID Token:</strong></p>
+                <textarea id="id-token" rows="6" readonly>${response.credential}</textarea>
+                <br>
+                <button onclick="copyToken()" class="success">Copy ID Token</button>
+            `;
+            
+            document.getElementById('api-test').style.display = 'block';
+        }
+        
+        function copyToken() {
+            const textarea = document.getElementById('id-token');
+            textarea.select();
+            document.execCommand('copy');
+            alert('ID Token copied to clipboard!');
+        }
+        
+        async function testLaravelAPI() {
+            if (!currentCredential || !currentUserInfo) {
+                alert('Please sign in with Google first!');
+                return;
+            }
+            
+            const apiData = {
+                id_token: currentCredential,
+                name: currentUserInfo.name,
+                email: currentUserInfo.email
+            };
+            
+            console.log('Sending to Laravel API:', apiData);
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/google-signin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(apiData)
+                });
+                
+                const result = await response.json();
+                console.log('Laravel API Response:', result);
+                
+                document.getElementById('api-result').innerHTML = `
+                    <h4>Laravel API Response:</h4>
+                    <pre style="background: #f0f0f0; padding: 15px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(result, null, 2)}</pre>
+                `;
+                
+                if (result.status === 'success') {
+                    alert(`✅ Success! 
+                           User: ${result.user.name}
+                           Role: ${result.user.role}
+                           Token: ${result.token.substring(0, 20)}...`);
+                } else {
+                    alert('❌ Error: ' + result.message);
+                }
+                
+            } catch (error) {
+                console.error('API Error:', error);
+                document.getElementById('api-result').innerHTML = `
+                    <h4>❌ Network Error:</h4>
+                    <p style="color: red;">${error.message}</p>
+                    <p>Make sure your Laravel server is running on <code>http://localhost:8000</code></p>
+                `;
+            }
+        }
+        
+        // Handle errors
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript Error:', e);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+services:
+  # PHP Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: smart-lms-app
+    container_name: smart-lms-app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - smart-lms-network
+
+  # Web Server (Nginx)
+  webserver:
+    image: nginx:alpine
+    container_name: smart-lms-nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - smart-lms-network
+
+# Docker Networks
+networks:
+  smart-lms-network:
+    driver: bridge
