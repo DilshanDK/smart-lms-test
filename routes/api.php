@@ -29,6 +29,7 @@ Route::get('/validate-session', [AuthController::class, 'validateSession']);
 
 // User routes
 Route::prefix('user')->name('user.')->group(function () {
+    
     Route::get('/profile', [UserController::class, 'getProfile']);
     Route::put('/profile', [UserController::class, 'updateProfile']);
     Route::post('/student-registration-request', [UserController::class, 'storeStudentRegistrationRequest']);
