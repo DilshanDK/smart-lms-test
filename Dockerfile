@@ -34,14 +34,11 @@ COPY . /var/www
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Generate application key if not exists
-RUN php artisan config:clear && php artisan cache:clear
-
-# Fix permissions
+# Fix permissions (moved before artisan commands)
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
 # Expose port (Render uses $PORT environment variable)
 EXPOSE ${PORT:-8000}
 
 # Start Laravel using artisan serve
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+CMD php artisan config:clear && php artisan cache:clear && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}

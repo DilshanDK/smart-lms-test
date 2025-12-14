@@ -1,5 +1,4 @@
 .git
-.env
 .env.local
 .env.*.local
 vendor
@@ -14,8 +13,6 @@ Thumbs.db
 *.log
 .phpunit.result.cache
 docker-compose.yml
-.dockerignore
-Dockerfile
 README.md
 tests
 .editorconfig
