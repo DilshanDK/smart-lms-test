@@ -1,13 +1,13 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'auth/*', 'login', 'logout', 'oauth/*'],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
         'https://smart-lms-test.onrender.com',
-        // Add your frontend URL here if different
+        'https://accounts.google.com', // Add Google's domain
     ],
 
     'allowed_origins_patterns' => [],
