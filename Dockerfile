@@ -32,19 +32,16 @@ WORKDIR /var/www
 COPY . /var/www
 
 # Install dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Generate optimized autoload files
-RUN php artisan config:cache || true
-RUN php artisan route:cache || true
+# Generate application key if not exists
+RUN php artisan config:clear && php artisan cache:clear
 
 # Fix permissions
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/storage \
-    && chmod -R 755 /var/www/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# Expose port (Render will use PORT environment variable)
-EXPOSE 8000
+# Expose port (Render uses $PORT environment variable)
+EXPOSE ${PORT:-8000}
 
-# Start Laravel development server
+# Start Laravel using artisan serve
 CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
